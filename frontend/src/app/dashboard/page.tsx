@@ -1,39 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import EmptyState from "@/components/ui/EmptyState";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import StatusBadge from "@/components/ui/StatusBadge";
 import { api } from "@/lib/api";
 import type { DeploymentRequest } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
-import { PlusCircle, FileText, Clock, CheckCircle2, ChevronRight } from "lucide-react";
+import { PlusCircle, FileText, Eye } from "lucide-react";
 
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  color,
-}: {
-  label: string;
-  value: number;
-  icon: typeof Clock;
-  color: string;
-}) {
-  return (
-    <div className="surface-card flex items-center gap-4 px-5 py-4">
-      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
-        <Icon className="h-5 w-5" />
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-        <p className="text-xs text-gray-500">{label}</p>
-      </div>
-    </div>
-  );
-}
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -44,14 +20,6 @@ export default function DashboardPage() {
     api.getRequests().then(setRequests).finally(() => setLoading(false));
   }, []);
 
-  const stats = useMemo(
-    () => ({
-      total: requests.length,
-      pending: requests.filter((r) => r.status === "pending").length,
-      completed: requests.filter((r) => r.status === "completed" || r.status === "approved").length,
-    }),
-    [requests]
-  );
 
   return (
     <ProtectedRoute>
@@ -70,13 +38,6 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {!loading && requests.length > 0 && (
-          <div className="mb-6 grid gap-3 sm:grid-cols-3">
-            <StatCard label="Total Requests" value={stats.total} icon={FileText} color="bg-brand-50 text-brand-600" />
-            <StatCard label="Pending" value={stats.pending} icon={Clock} color="bg-amber-50 text-amber-600" />
-            <StatCard label="Completed" value={stats.completed} icon={CheckCircle2} color="bg-emerald-50 text-emerald-600" />
-          </div>
-        )}
 
         {loading ? (
           <LoadingSpinner label="Loading your requests..." />
@@ -103,9 +64,8 @@ export default function DashboardPage() {
                   <tr>
                     <th>Request</th>
                     <th>Application</th>
-                    <th>Status</th>
                     <th>Submitted</th>
-                    <th className="w-10"></th>
+                    <th className="w-24"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -115,14 +75,17 @@ export default function DashboardPage() {
                       <tr key={req.id} className="group">
                         <td className="font-semibold text-gray-900">#{req.id}</td>
                         <td className="font-medium">{appName}</td>
-                        <td>
-                          <StatusBadge status={req.status} />
-                        </td>
                         <td className="text-gray-500">
                           {new Date(req.created_at).toLocaleDateString(undefined, { dateStyle: "medium" })}
                         </td>
                         <td>
-                          <ChevronRight className="h-4 w-4 text-gray-300" />
+                          <button
+                            onClick={() => (window.location.href = `/dashboard/requests/${req.id}`)}
+                            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-brand-600 transition hover:bg-brand-50"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            View
+                          </button>
                         </td>
                       </tr>
                     );

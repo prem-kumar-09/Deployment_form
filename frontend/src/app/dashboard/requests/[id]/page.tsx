@@ -16,8 +16,7 @@ import {
   FileText,
 } from "lucide-react";
 
-
-export default function AdminRequestDetailPage() {
+export default function UserRequestDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = Number(params.id);
@@ -27,33 +26,35 @@ export default function AdminRequestDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.getRequest(id), api.getFormFields()])
-      .then(([req, allFields]) => {
+    Promise.all([api.getRequest(id), api.getFormSchema()])
+      .then(([req, schema]) => {
         setRequest(req);
-        setFields(allFields.filter((f) => f.is_active || req.values.some((v) => v.field_id === f.id)));
+        setFields(schema.fields.filter((f) => f.is_active || req.values.some((v) => v.field_id === f.id)));
       })
-      .catch(() => router.push("/admin"))
+      .catch((err) => {
+        console.error("Error loading request:", err);
+        router.push("/dashboard");
+      })
       .finally(() => setLoading(false));
   }, [id, router]);
 
-
   if (loading || !request) {
     return (
-      <ProtectedRoute adminOnly>
+      <ProtectedRoute>
         <LoadingSpinner label="Loading request details..." />
       </ProtectedRoute>
     );
   }
 
   return (
-    <ProtectedRoute adminOnly>
+    <ProtectedRoute>
       <div className="animate-fade-in">
         <button
-          onClick={() => router.push("/admin")}
+          onClick={() => router.push("/dashboard")}
           className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-gray-700"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to requests
+          Back to dashboard
         </button>
 
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -71,7 +72,6 @@ export default function AdminRequestDetailPage() {
             </div>
           </div>
         </div>
-
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="surface-card overflow-hidden">

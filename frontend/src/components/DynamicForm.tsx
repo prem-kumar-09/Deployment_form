@@ -7,7 +7,7 @@ import { AlertCircle, Send } from "lucide-react";
 interface DynamicFormProps {
   fields: FormField[];
   initialValues?: RequestFieldValue[];
-  onSubmit: (values: RequestValueInput[]) => Promise<void>;
+  onSubmit?: (values: RequestValueInput[]) => Promise<void>;
   submitLabel?: string;
   readOnly?: boolean;
   showNumbers?: boolean;
@@ -48,6 +48,7 @@ export default function DynamicForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!onSubmit) return;
     setError("");
     setSubmitting(true);
     try {
@@ -55,7 +56,7 @@ export default function DynamicForm({
         field_id: f.id,
         value: values[f.id] ?? "",
       }));
-      await onSubmit(payload);
+      await onSubmit!(payload);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submission failed");
     } finally {
