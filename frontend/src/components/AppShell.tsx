@@ -2,37 +2,26 @@
 
 import { usePathname } from "next/navigation";
 import AdminSidebar from "@/components/AdminSidebar";
-import UserSidebar from "@/components/UserSidebar";
 import { useAuth } from "@/components/AuthProvider";
 
-const AUTH_PATHS = ["/login", "/register"];
+const BARE_PATHS = ["/login", "/f/"];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const isAuthPage = AUTH_PATHS.includes(pathname);
-  const isAdmin = user?.role === "admin";
-  const isAdminPage = pathname.startsWith("/admin");
 
-  if (isAuthPage) {
+  const isBare = BARE_PATHS.some((p) =>
+    p.endsWith("/") ? pathname.startsWith(p) : pathname === p
+  );
+
+  if (isBare) {
     return <>{children}</>;
   }
 
-  if (isAdmin && isAdminPage) {
+  if (user && pathname.startsWith("/admin")) {
     return (
       <div className="flex min-h-screen">
         <AdminSidebar />
-        <main className="ml-[260px] flex-1 transition-all duration-300">
-          <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">{children}</div>
-        </main>
-      </div>
-    );
-  }
-
-  if (user) {
-    return (
-      <div className="flex min-h-screen">
-        <UserSidebar />
         <main className="ml-[260px] flex-1 transition-all duration-300">
           <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">{children}</div>
         </main>

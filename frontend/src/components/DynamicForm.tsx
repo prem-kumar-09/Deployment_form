@@ -1,19 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FormField, RequestFieldValue, RequestValueInput } from "@/lib/types";
-import { AlertCircle, Send } from "lucide-react";
+import type { FormField, SubmissionFieldValue, SubmissionValueInput } from "@/lib/types";
+import { AlertCircle } from "lucide-react";
 
 interface DynamicFormProps {
   fields: FormField[];
-  initialValues?: RequestFieldValue[];
-  onSubmit?: (values: RequestValueInput[]) => Promise<void>;
+  initialValues?: SubmissionFieldValue[];
+  onSubmit?: (values: SubmissionValueInput[]) => Promise<void>;
   submitLabel?: string;
   readOnly?: boolean;
   showNumbers?: boolean;
+  useClassicRadio?: boolean;
 }
 
-const EMPTY_INITIAL: RequestFieldValue[] = [];
+const EMPTY_INITIAL: SubmissionFieldValue[] = [];
 
 export default function DynamicForm({
   fields,
@@ -22,6 +23,7 @@ export default function DynamicForm({
   submitLabel = "Submit",
   readOnly = false,
   showNumbers = true,
+  useClassicRadio = false,
 }: DynamicFormProps) {
   const safeInitial = initialValues ?? EMPTY_INITIAL;
   const [values, setValues] = useState<Record<number, string>>({});
@@ -52,7 +54,7 @@ export default function DynamicForm({
     setError("");
     setSubmitting(true);
     try {
-      const payload: RequestValueInput[] = fields.map((f) => ({
+      const payload: SubmissionValueInput[] = fields.map((f) => ({
         field_id: f.id,
         value: values[f.id] ?? "",
       }));
@@ -68,14 +70,12 @@ export default function DynamicForm({
     const value = values[field.id] ?? "";
 
     const label = (
-      <label htmlFor={`field-${field.id}`} className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-800">
+      <label htmlFor={`field-${field.id}`} className="mb-2 block text-sm font-medium text-gray-800">
         {showNumbers && (
-          <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-100 text-[10px] font-bold text-brand-700">
-            {index + 1}
-          </span>
+          <span className="mr-1.5 text-gray-600">{index + 1}.</span>
         )}
         <span>{field.label}</span>
-        {field.is_required && <span className="text-red-500">*</span>}
+        {field.is_required && <span className="ml-1 text-red-500">*</span>}
       </label>
     );
 
@@ -98,7 +98,7 @@ export default function DynamicForm({
               className="field-input min-h-[100px] resize-y"
               rows={4}
               value={value}
-              placeholder={field.placeholder ?? undefined}
+              placeholder={field.placeholder ?? "Enter your answer"}
               required={field.is_required}
               onChange={(e) => handleChange(field.id, e.target.value)}
             />
@@ -109,25 +109,43 @@ export default function DynamicForm({
         return (
           <fieldset key={field.id} className="space-y-0">
             {label}
-            <div className="mt-1 flex flex-wrap gap-2">
-              {(field.options ?? []).map((opt) => (
-                <label
-                  key={opt}
-                  className={`radio-pill ${value === opt ? "radio-pill-selected" : ""}`}
-                >
-                  <input
-                    type="radio"
-                    name={`field-${field.id}`}
-                    value={opt}
-                    checked={value === opt}
-                    required={field.is_required}
-                    onChange={() => handleChange(field.id, opt)}
-                    className="sr-only"
-                  />
-                  {opt}
-                </label>
-              ))}
-            </div>
+            {useClassicRadio ? (
+              <div className="mt-2 space-y-1">
+                {(field.options ?? []).map((opt) => (
+                  <label key={opt} className="radio-option">
+                    <input
+                      type="radio"
+                      name={`field-${field.id}`}
+                      value={opt}
+                      checked={value === opt}
+                      required={field.is_required}
+                      onChange={() => handleChange(field.id, opt)}
+                    />
+                    <span>{opt}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-1 flex flex-wrap gap-2">
+                {(field.options ?? []).map((opt) => (
+                  <label
+                    key={opt}
+                    className={`radio-pill ${value === opt ? "radio-pill-selected" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name={`field-${field.id}`}
+                      value={opt}
+                      checked={value === opt}
+                      required={field.is_required}
+                      onChange={() => handleChange(field.id, opt)}
+                      className="sr-only"
+                    />
+                    {opt}
+                  </label>
+                ))}
+              </div>
+            )}
           </fieldset>
         );
 
@@ -176,7 +194,7 @@ export default function DynamicForm({
               type={field.field_type === "email" ? "email" : field.field_type === "url" ? "url" : "text"}
               className="field-input"
               value={value}
-              placeholder={field.placeholder ?? undefined}
+              placeholder={field.placeholder ?? "Enter your answer"}
               required={field.is_required}
               onChange={(e) => handleChange(field.id, e.target.value)}
             />
@@ -188,7 +206,7 @@ export default function DynamicForm({
   const sortedFields = [...fields].sort((a, b) => a.sort_order - b.sort_order);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-7">
       {sortedFields.map((field, i) => renderField(field, i))}
 
       {error && (
@@ -199,8 +217,8 @@ export default function DynamicForm({
       )}
 
       {!readOnly && (
-        <div className="flex justify-end border-t border-gray-100 pt-5">
-          <button type="submit" className="btn-primary min-w-[140px]" disabled={submitting}>
+        <div className="flex justify-start pt-6">
+          <button type="submit" className="btn-primary min-w-[120px]" disabled={submitting}>
             {submitting ? (
               <span className="flex items-center gap-2">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -208,7 +226,6 @@ export default function DynamicForm({
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                <Send className="h-4 w-4" />
                 {submitLabel}
               </span>
             )}

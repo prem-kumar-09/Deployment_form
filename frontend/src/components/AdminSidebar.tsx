@@ -3,17 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  FileText,
-  Settings2,
-  Users,
+  LayoutGrid,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "Requests", icon: FileText, exact: true },
-  { href: "/admin/fields", label: "Form Builder", icon: Settings2 },
-  { href: "/admin/config", label: "User Management", icon: Users },
+  { href: "/admin", label: "My Forms", icon: LayoutGrid, exact: true },
 ];
 
 export default function AdminSidebar() {
@@ -39,10 +35,10 @@ export default function AdminSidebar() {
       <div className="flex h-16 items-center border-b border-gray-100 px-5">
         <Link href="/admin" className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
-            DR
+            FB
           </span>
           <div>
-            <p className="text-sm font-semibold text-gray-900">Deployment</p>
+            <p className="text-sm font-semibold text-gray-900">Form Builder</p>
             <p className="text-[11px] text-gray-500">Admin Console</p>
           </div>
         </Link>

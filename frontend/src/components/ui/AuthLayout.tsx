@@ -7,7 +7,7 @@ interface AuthLayoutProps {
   title: string;
   subtitle: string;
   children: React.ReactNode;
-  footer: React.ReactNode;
+  footer?: React.ReactNode;
 }
 
 export default function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProps) {
@@ -18,25 +18,25 @@ export default function AuthLayout({ title, subtitle, children, footer }: AuthLa
         <div className="relative">
           <Link href="/" className="inline-flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-base font-bold ring-1 ring-white/20 backdrop-blur">
-              DR
+              FB
             </span>
-            <span className="text-lg font-semibold">Deployment Request</span>
+            <span className="text-lg font-semibold">Form Builder</span>
           </Link>
         </div>
         <div className="relative max-w-md animate-slide-up">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-brand-200">Enterprise Workflow</p>
-          <h2 className="text-3xl font-bold leading-tight">Streamline your deployment requests</h2>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-brand-200">Form Builder Platform</p>
+          <h2 className="text-3xl font-bold leading-tight">Build forms, share links, collect responses</h2>
           <p className="mt-3 text-sm leading-relaxed text-indigo-200">
-            Submit, track, and manage application deployments with a configurable form built for teams and administrators.
+            Create beautiful, themed forms with a drag-and-drop builder. Share public links and collect anonymous submissions.
           </p>
           <div className="mt-8 space-y-4">
             <div className="flex items-start gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10">
-                <Settings className="h-4 w-4 text-brand-200" />
+                <SettingsIcon className="h-4 w-4 text-brand-200" />
               </div>
               <div>
-                <p className="text-sm font-medium text-white">Configurable Forms</p>
-                <p className="text-xs text-indigo-300">Admin-managed fields without code changes</p>
+                <p className="text-sm font-medium text-white">Drag & Drop Builder</p>
+                <p className="text-xs text-indigo-300">Build forms visually with live preview</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -44,8 +44,8 @@ export default function AuthLayout({ title, subtitle, children, footer }: AuthLa
                 <Shield className="h-4 w-4 text-brand-200" />
               </div>
               <div>
-                <p className="text-sm font-medium text-white">Role-based Access</p>
-                <p className="text-xs text-indigo-300">Separate views for users and administrators</p>
+                <p className="text-sm font-medium text-white">Full Theme Control</p>
+                <p className="text-xs text-indigo-300">Colors, fonts, backgrounds — make it yours</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -53,21 +53,21 @@ export default function AuthLayout({ title, subtitle, children, footer }: AuthLa
                 <BarChart3 className="h-4 w-4 text-brand-200" />
               </div>
               <div>
-                <p className="text-sm font-medium text-white">Request Tracking</p>
-                <p className="text-xs text-indigo-300">Full lifecycle visibility for all submissions</p>
+                <p className="text-sm font-medium text-white">Shareable Links</p>
+                <p className="text-xs text-indigo-300">Generate public links for anonymous submissions</p>
               </div>
             </div>
           </div>
         </div>
-        <p className="relative text-xs text-indigo-400">&copy; {new Date().getFullYear()} Deployment Request Sheet</p>
+        <p className="relative text-xs text-indigo-400">&copy; {new Date().getFullYear()} Form Builder</p>
       </div>
 
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-8">
         <div className="w-full max-w-md animate-slide-up">
           <div className="mb-8 lg:hidden">
             <Link href="/" className="inline-flex items-center gap-2 text-gray-900">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">DR</span>
-              <span className="font-semibold">Deployment Request</span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">FB</span>
+              <span className="font-semibold">Form Builder</span>
             </Link>
           </div>
           <div className="surface-card p-8">
@@ -76,7 +76,7 @@ export default function AuthLayout({ title, subtitle, children, footer }: AuthLa
               <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
             </div>
             {children}
-            <div className="mt-6 text-center text-sm text-gray-500">{footer}</div>
+            {footer && <div className="mt-6 text-center text-sm text-gray-500">{footer}</div>}
           </div>
         </div>
       </div>
@@ -84,6 +84,6 @@ export default function AuthLayout({ title, subtitle, children, footer }: AuthLa
   );
 }
 
-function Settings({ className }: { className?: string }) {
+function SettingsIcon({ className }: { className?: string }) {
   return <Zap className={className} />;
 }

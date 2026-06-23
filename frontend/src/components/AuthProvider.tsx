@@ -3,13 +3,12 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import type { User, UserRole } from "@/lib/types";
+import type { User } from "@/lib/types";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, name: string, password: string, role: UserRole) => Promise<void>;
   logout: () => void;
   refresh: () => Promise<void>;
 }
@@ -48,12 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("token", access_token);
     const me = await api.me();
     setUser(me);
-    router.push(me.role === "admin" ? "/admin" : "/dashboard");
-  };
-
-  const register = async (email: string, name: string, password: string, role: UserRole) => {
-    await api.register(email, name, password, role);
-    await login(email, password);
+    router.push("/admin");
   };
 
   const logout = () => {
@@ -63,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

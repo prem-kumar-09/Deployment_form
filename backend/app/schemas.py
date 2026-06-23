@@ -4,19 +4,12 @@ from typing import Any
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-from app.models import FieldType, RequestStatus, UserRole
+from app.models import FieldType, SubmissionStatus
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
-
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    name: str = Field(min_length=1, max_length=255)
-    password: str = Field(min_length=6)
-    role: UserRole = UserRole.user
 
 
 class UserLogin(BaseModel):
@@ -28,15 +21,36 @@ class UserResponse(BaseModel):
     id: int
     email: str
     name: str
-    role: UserRole
+    role: str
     created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-class UserRoleUpdate(BaseModel):
-    role: UserRole
+# ── Theme ──
+
+class ThemeConfig(BaseModel):
+    bg_color: str = "#ffffff"
+    bg_image_url: str | None = None
+    font_family: str = "Inter"
+    primary_color: str = "#6d28d9"
+    text_color: str = "#111827"
+    border_radius: int = 8
+
+
+# ── Forms ──
+
+class FormCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = None
+
+
+class FormUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    theme: ThemeConfig | None = None
+    is_active: bool | None = None
 
 
 class FormFieldCreate(BaseModel):
@@ -66,6 +80,15 @@ class FormFieldUpdate(BaseModel):
     is_required: bool | None = None
     sort_order: int | None = None
     is_active: bool | None = None
+
+
+class FieldReorderItem(BaseModel):
+    id: int
+    sort_order: int
+
+
+class FieldReorderRequest(BaseModel):
+    fields: list[FieldReorderItem]
 
 
 class FormFieldResponse(BaseModel):
@@ -100,22 +123,52 @@ class FormFieldResponse(BaseModel):
         )
 
 
-class RequestValueInput(BaseModel):
+class FormResponse(BaseModel):
+    id: int
+    title: str
+    description: str | None
+    share_token: str
+    theme: ThemeConfig | None
+    is_active: bool
+    fields: list[FormFieldResponse]
+    submission_count: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+
+class FormListItem(BaseModel):
+    id: int
+    title: str
+    description: str | None
+    share_token: str
+    is_active: bool
+    field_count: int
+    submission_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
+# ── Public form ──
+
+class FormPublicResponse(BaseModel):
+    title: str
+    description: str | None
+    theme: ThemeConfig | None
+    fields: list[FormFieldResponse]
+
+
+# ── Submissions ──
+
+class SubmissionValueInput(BaseModel):
     field_id: int
     value: str | None = None
 
 
-class DeploymentRequestCreate(BaseModel):
-    values: list[RequestValueInput]
+class SubmissionCreate(BaseModel):
+    values: list[SubmissionValueInput]
 
 
-class DeploymentRequestUpdate(BaseModel):
-    values: list[RequestValueInput] | None = None
-    status: RequestStatus | None = None
-    admin_notes: str | None = None
-
-
-class RequestFieldValueResponse(BaseModel):
+class SubmissionFieldValueResponse(BaseModel):
     field_id: int
     field_name: str
     field_label: str
@@ -124,19 +177,18 @@ class RequestFieldValueResponse(BaseModel):
     options: list[str] | None = None
 
 
-class DeploymentRequestResponse(BaseModel):
+class SubmissionResponse(BaseModel):
     id: int
-    submitter_id: int
-    submitter_name: str
-    submitter_email: str
-    status: RequestStatus
+    form_id: int
+    submitter_name: str | None
+    submitter_email: str | None
+    status: SubmissionStatus
     admin_notes: str | None
-    values: list[RequestFieldValueResponse]
+    values: list[SubmissionFieldValueResponse]
     created_at: datetime
     updated_at: datetime
 
 
-class FormSchemaResponse(BaseModel):
-    fields: list[FormFieldResponse]
-    title: str = "Deployment Request Sheet"
-    description: str = "Submit a deployment request. All required fields must be completed."
+class SubmissionUpdate(BaseModel):
+    status: SubmissionStatus | None = None
+    admin_notes: str | None = None

@@ -1,8 +1,6 @@
-export type UserRole = "user" | "admin";
-
 export type FieldType = "text" | "textarea" | "date" | "radio" | "select" | "email" | "url";
 
-export type RequestStatus =
+export type SubmissionStatus =
   | "pending"
   | "approved"
   | "rejected"
@@ -13,8 +11,17 @@ export interface User {
   id: number;
   email: string;
   name: string;
-  role: UserRole;
+  role: string;
   created_at: string;
+}
+
+export interface ThemeConfig {
+  bg_color: string;
+  bg_image_url?: string | null;
+  font_family: string;
+  primary_color: string;
+  text_color: string;
+  border_radius: number;
 }
 
 export interface FormField {
@@ -29,13 +36,39 @@ export interface FormField {
   is_active: boolean;
 }
 
-export interface FormSchema {
-  fields: FormField[];
+export interface Form {
+  id: number;
   title: string;
-  description: string;
+  description: string | null;
+  share_token: string;
+  theme: ThemeConfig | null;
+  is_active: boolean;
+  fields: FormField[];
+  submission_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface RequestFieldValue {
+export interface FormListItem {
+  id: number;
+  title: string;
+  description: string | null;
+  share_token: string;
+  is_active: boolean;
+  field_count: number;
+  submission_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FormPublicResponse {
+  title: string;
+  description: string | null;
+  theme: ThemeConfig | null;
+  fields: FormField[];
+}
+
+export interface SubmissionFieldValue {
   field_id: number;
   field_name: string;
   field_label: string;
@@ -44,19 +77,19 @@ export interface RequestFieldValue {
   options?: string[] | null;
 }
 
-export interface DeploymentRequest {
+export interface Submission {
   id: number;
-  submitter_id: number;
-  submitter_name: string;
-  submitter_email: string;
-  status: RequestStatus;
+  form_id: number;
+  submitter_name: string | null;
+  submitter_email: string | null;
+  status: SubmissionStatus;
   admin_notes: string | null;
-  values: RequestFieldValue[];
+  values: SubmissionFieldValue[];
   created_at: string;
   updated_at: string;
 }
 
-export interface RequestValueInput {
+export interface SubmissionValueInput {
   field_id: number;
   value: string | null;
 }

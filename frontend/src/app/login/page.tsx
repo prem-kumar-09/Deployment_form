@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import AuthLayout from "@/components/ui/AuthLayout";
@@ -28,16 +27,8 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to access your deployment requests"
-      footer={
-        <>
-          Don&apos;t have an account?{" "}
-          <Link href="/register" className="font-semibold text-brand-600 hover:text-brand-700">
-            Create one
-          </Link>
-        </>
-      }
+      title="Admin Login"
+      subtitle="Sign in to manage your forms"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -46,7 +37,7 @@ export default function LoginPage() {
             id="email"
             type="email"
             className="field-input"
-            placeholder="you@company.com"
+            placeholder="admin@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required

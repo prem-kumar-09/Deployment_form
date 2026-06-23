@@ -1,4 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:8000";
 
 export class ApiError extends Error {
   constructor(
@@ -50,73 +51,124 @@ async function request<T>(
 }
 
 export const api = {
+  // Auth
   login: (email: string, password: string) =>
     request<{ access_token: string }>("/auth/login/json", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }, false),
 
-  register: (email: string, name: string, password: string, role: import("./types").UserRole) =>
-    request("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email, name, password, role }),
-    }, false),
-
   me: () => request<import("./types").User>("/auth/me"),
 
-  getFormSchema: () =>
-    request<import("./types").FormSchema>("/form/schema", {}, false),
+  // Forms CRUD (admin)
+  getForms: () => request<import("./types").FormListItem[]>("/forms"),
 
-  getRequests: () => request<import("./types").DeploymentRequest[]>("/requests"),
+  getForm: (id: number) => request<import("./types").Form>(`/forms/${id}`),
 
-  getRequest: (id: number) =>
-    request<import("./types").DeploymentRequest>(`/requests/${id}`),
-
-  submitRequest: (values: import("./types").RequestValueInput[]) =>
-    request<import("./types").DeploymentRequest>("/requests", {
+  createForm: (data: { title: string; description?: string }) =>
+    request<import("./types").Form>("/forms", {
       method: "POST",
-      body: JSON.stringify({ values }),
+      body: JSON.stringify(data),
     }),
 
-  updateRequest: (
-    id: number,
-    data: {
-      values?: import("./types").RequestValueInput[];
-      status?: import("./types").RequestStatus;
-      admin_notes?: string | null;
-    }
-  ) =>
-    request<import("./types").DeploymentRequest>(`/requests/${id}`, {
+  updateForm: (id: number, data: {
+    title?: string;
+    description?: string | null;
+    theme?: import("./types").ThemeConfig | null;
+    is_active?: boolean;
+  }) =>
+    request<import("./types").Form>(`/forms/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
 
-  getFormFields: () => request<import("./types").FormField[]>("/form/fields"),
+  deleteForm: (id: number) =>
+    request<void>(`/forms/${id}`, { method: "DELETE" }),
 
-  createFormField: (data: Partial<import("./types").FormField> & {
+  regenerateLink: (id: number) =>
+    request<import("./types").Form>(`/forms/${id}/regenerate-link`, {
+      method: "POST",
+    }),
+
+  // Fields CRUD (admin, form-scoped)
+  getFormFields: (formId: number) =>
+    request<import("./types").FormField[]>(`/forms/${formId}/fields`),
+
+  createFormField: (formId: number, data: Partial<import("./types").FormField> & {
     name: string;
     label: string;
     field_type: import("./types").FieldType;
   }) =>
-    request<import("./types").FormField>("/form/fields", {
+    request<import("./types").FormField>(`/forms/${formId}/fields`, {
       method: "POST",
       body: JSON.stringify(data),
     }),
 
-  updateFormField: (id: number, data: Partial<import("./types").FormField>) =>
-    request<import("./types").FormField>(`/form/fields/${id}`, {
+  updateFormField: (formId: number, fieldId: number, data: Partial<import("./types").FormField>) =>
+    request<import("./types").FormField>(`/forms/${formId}/fields/${fieldId}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
 
-  deleteFormField: (id: number) =>
-    request<void>(`/form/fields/${id}`, { method: "DELETE" }),
+  deleteFormField: (formId: number, fieldId: number) =>
+    request<void>(`/forms/${formId}/fields/${fieldId}`, { method: "DELETE" }),
 
-  getUsers: () => request<import("./types").User[]>("/auth/users"),
-
-  updateUserRole: (userId: number, role: import("./types").UserRole) =>
-    request<import("./types").User>(`/auth/users/${userId}/role`, {
+  reorderFields: (formId: number, fields: { id: number; sort_order: number }[]) =>
+    request<import("./types").FormField[]>(`/forms/${formId}/fields/reorder`, {
       method: "PATCH",
-      body: JSON.stringify({ role }),
+      body: JSON.stringify({ fields }),
     }),
+
+  // Public form
+  getPublicForm: (token: string) =>
+    request<import("./types").FormPublicResponse>(`/public/forms/${token}`, {}, false),
+
+  submitPublicForm: (token: string, values: import("./types").SubmissionValueInput[]) =>
+    request<import("./types").Submission>(`/public/forms/${token}/submit`, {
+      method: "POST",
+      body: JSON.stringify({ values }),
+    }, false),
+
+  // Submissions (admin)
+  getSubmissions: (formId: number) =>
+    request<import("./types").Submission[]>(`/forms/${formId}/submissions`),
+
+  getSubmission: (formId: number, submissionId: number) =>
+    request<import("./types").Submission>(`/forms/${formId}/submissions/${submissionId}`),
+
+  updateSubmission: (formId: number, submissionId: number, data: {
+    status?: import("./types").SubmissionStatus;
+    admin_notes?: string | null;
+  }) =>
+    request<import("./types").Submission>(`/forms/${formId}/submissions/${submissionId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  // Image upload
+  uploadImage: async (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const token = getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const res = await fetch(`${API_URL}/upload/image`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      let message = "Upload failed";
+      try {
+        const data = await res.json();
+        message = data.detail || message;
+      } catch { /* ignore */ }
+      throw new ApiError(message, res.status);
+    }
+
+    const data = await res.json();
+    return { url: `${BACKEND_URL}${data.url}` };
+  },
 };

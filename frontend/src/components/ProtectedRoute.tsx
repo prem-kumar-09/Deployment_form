@@ -7,10 +7,8 @@ import { useAuth } from "@/components/AuthProvider";
 
 export default function ProtectedRoute({
   children,
-  adminOnly = false,
 }: {
   children: React.ReactNode;
-  adminOnly?: boolean;
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -19,14 +17,10 @@ export default function ProtectedRoute({
     if (loading) return;
     if (!user) {
       router.replace("/login");
-      return;
     }
-    if (adminOnly && user.role !== "admin") {
-      router.replace("/dashboard");
-    }
-  }, [user, loading, adminOnly, router]);
+  }, [user, loading, router]);
 
-  if (loading || !user || (adminOnly && user.role !== "admin")) {
+  if (loading || !user) {
     return <LoadingSpinner />;
   }
 

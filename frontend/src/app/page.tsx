@@ -12,7 +12,7 @@ export default function HomePage() {
   useEffect(() => {
     if (loading) return;
     if (!user) router.replace("/login");
-    else router.replace(user.role === "admin" ? "/admin" : "/dashboard");
+    else router.replace("/admin");
   }, [user, loading, router]);
 
   return <LoadingSpinner label="Redirecting..." />;
