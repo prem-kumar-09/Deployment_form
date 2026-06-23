@@ -108,4 +108,15 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
+
+  deleteFormField: (id: number) =>
+    request<void>(`/form/fields/${id}`, { method: "DELETE" }),
+
+  getUsers: () => request<import("./types").User[]>("/auth/users"),
+
+  updateUserRole: (userId: number, role: import("./types").UserRole) =>
+    request<import("./types").User>(`/auth/users/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    }),
 };

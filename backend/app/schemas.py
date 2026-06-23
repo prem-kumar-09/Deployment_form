@@ -35,6 +35,10 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
+class UserRoleUpdate(BaseModel):
+    role: UserRole
+
+
 class FormFieldCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100, pattern=r"^[a-z][a-z0-9_]*$")
     label: str = Field(min_length=1, max_length=255)

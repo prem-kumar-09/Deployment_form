@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from app.auth import create_access_token, get_password_hash, verify_password
 from app.database import get_db
 from app.models import User, UserRole
-from app.schemas import Token, UserCreate, UserLogin, UserResponse
-from app.services import get_current_user
+from app.schemas import Token, UserCreate, UserLogin, UserResponse, UserRoleUpdate
+from app.services import get_current_user, require_admin, list_users, update_user_role
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -54,3 +54,21 @@ def login_json(data: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.get("/users", response_model=list[UserResponse])
+def get_users(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    return list_users(db)
+
+
+@router.patch("/users/{user_id}/role", response_model=UserResponse)
+def patch_user_role(
+    user_id: int,
+    data: UserRoleUpdate,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(require_admin),
+):
+    return update_user_role(db, user_id, data, current_admin)

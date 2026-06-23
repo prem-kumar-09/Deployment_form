@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import AuthLayout from "@/components/ui/AuthLayout";
+import { AlertCircle, LogIn } from "lucide-react";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -32,13 +33,13 @@ export default function LoginPage() {
       footer={
         <>
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="font-semibold text-orange-600 hover:text-orange-700">
+          <Link href="/register" className="font-semibold text-brand-600 hover:text-brand-700">
             Create one
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="field-label">Email address</label>
           <input
@@ -57,19 +58,30 @@ export default function LoginPage() {
             id="password"
             type="password"
             className="field-input"
-            placeholder="••••••••"
+            placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
         {error && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
         )}
         <button type="submit" className="btn-primary w-full py-3" disabled={loading}>
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              Signing in...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              <LogIn className="h-4 w-4" />
+              Sign in
+            </span>
+          )}
         </button>
       </form>
     </AuthLayout>

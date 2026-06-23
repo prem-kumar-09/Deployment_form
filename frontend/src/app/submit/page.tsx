@@ -8,6 +8,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { api } from "@/lib/api";
 import type { FormSchema, RequestValueInput } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
+import { FileText, Info } from "lucide-react";
 
 export default function SubmitPage() {
   const { user } = useAuth();
@@ -41,21 +42,34 @@ export default function SubmitPage() {
   return (
     <ProtectedRoute>
       <div className="mx-auto max-w-3xl animate-slide-up">
-        <div className="mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white shadow-glow sm:p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-100">New submission</p>
-          <h1 className="mt-2 text-3xl font-bold">{schema.title}</h1>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-orange-50">
-            Hi {user?.name}, when you submit this form the admin team will see your name and email address.
-            Fields marked with <span className="font-bold">*</span> are required.
-          </p>
-        </div>
+        <div className="surface-card overflow-hidden">
+          <div className="bg-brand-600 px-6 py-6 sm:px-8">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10">
+                <FileText className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">{schema.title}</h1>
+                <p className="mt-1 text-sm text-brand-200">{schema.description}</p>
+              </div>
+            </div>
+          </div>
 
-        <div className="surface-card p-6 sm:p-8">
-          <DynamicForm
-            fields={schema.fields}
-            onSubmit={handleSubmit}
-            submitLabel="Submit request"
-          />
+          <div className="border-b border-gray-100 bg-blue-50 px-6 py-3 sm:px-8">
+            <p className="flex items-center gap-2 text-xs text-blue-700">
+              <Info className="h-3.5 w-3.5 shrink-0" />
+              Submitting as <span className="font-semibold">{user?.name}</span> ({user?.email}).
+              Fields marked with <span className="font-bold text-red-500">*</span> are required.
+            </p>
+          </div>
+
+          <div className="p-6 sm:p-8">
+            <DynamicForm
+              fields={schema.fields}
+              onSubmit={handleSubmit}
+              submitLabel="Submit request"
+            />
+          </div>
         </div>
       </div>
     </ProtectedRoute>

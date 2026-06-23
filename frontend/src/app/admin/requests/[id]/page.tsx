@@ -8,8 +8,26 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { api } from "@/lib/api";
 import type { DeploymentRequest, FormField, RequestStatus, RequestValueInput } from "@/lib/types";
+import {
+  ArrowLeft,
+  User,
+  Calendar,
+  Hash,
+  Clock,
+  Save,
+  Check,
+  AlertCircle,
+  FileText,
+  MessageSquare,
+} from "lucide-react";
 
-const STATUSES: RequestStatus[] = ["pending", "approved", "rejected", "in_progress", "completed"];
+const STATUSES: { value: RequestStatus; label: string; color: string }[] = [
+  { value: "pending", label: "Pending", color: "text-amber-600" },
+  { value: "approved", label: "Approved", color: "text-emerald-600" },
+  { value: "rejected", label: "Rejected", color: "text-red-600" },
+  { value: "in_progress", label: "In Progress", color: "text-blue-600" },
+  { value: "completed", label: "Completed", color: "text-gray-600" },
+];
 
 export default function AdminRequestDetailPage() {
   const params = useParams();
@@ -22,7 +40,7 @@ export default function AdminRequestDetailPage() {
   const [adminNotes, setAdminNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
     Promise.all([api.getRequest(id), api.getFormFields()])
@@ -38,7 +56,7 @@ export default function AdminRequestDetailPage() {
 
   const handleFormSubmit = async (values: RequestValueInput[]) => {
     setSaving(true);
-    setMessage("");
+    setMessage(null);
     try {
       const updated = await api.updateRequest(id, {
         values,
@@ -46,9 +64,10 @@ export default function AdminRequestDetailPage() {
         admin_notes: adminNotes,
       });
       setRequest(updated);
-      setMessage("Changes saved successfully.");
+      setMessage({ text: "Changes saved successfully.", type: "success" });
+      setTimeout(() => setMessage(null), 3000);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Update failed");
+      setMessage({ text: err instanceof Error ? err.message : "Update failed", type: "error" });
     } finally {
       setSaving(false);
     }
@@ -64,31 +83,69 @@ export default function AdminRequestDetailPage() {
 
   return (
     <ProtectedRoute adminOnly>
-      <div className="animate-slide-up">
-        <button onClick={() => router.push("/admin")} className="btn-ghost mb-4 -ml-2 text-sm">
-          ← Back to requests
+      <div className="animate-fade-in">
+        <button
+          onClick={() => router.push("/admin")}
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-gray-700"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to requests
         </button>
 
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-600">Request detail</p>
-            <h1 className="mt-2 text-3xl font-bold text-slate-900">Request #{request.id}</h1>
-            <p className="mt-2 text-slate-600">
-              Submitted by <span className="font-semibold text-slate-900">{request.submitter_name}</span>
-              {" "}({request.submitter_email})
-            </p>
-            <p className="text-sm text-slate-500">
-              {new Date(request.created_at).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" })}
-            </p>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-gray-900">Request #{request.id}</h1>
+              <StatusBadge status={request.status} />
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+              <span className="inline-flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5" />
+                {request.submitter_name}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5" />
+                {new Date(request.created_at).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" })}
+              </span>
+            </div>
           </div>
-          <StatusBadge status={request.status} />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-          <aside className="space-y-4">
-            <div className="surface-card p-5">
-              <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-slate-500">Admin controls</h2>
-              <div className="space-y-4">
+        {message && (
+          <div
+            className={`mb-6 flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium animate-fade-in ${
+              message.type === "success"
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border border-red-200 bg-red-50 text-red-800"
+            }`}
+          >
+            {message.type === "success" ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+            {message.text}
+          </div>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <div className="surface-card overflow-hidden">
+            <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+              <FileText className="h-4 w-4 text-gray-400" />
+              <h2 className="text-sm font-semibold text-gray-900">Deployment Request Form</h2>
+            </div>
+            <div className="p-6">
+              <DynamicForm
+                fields={fields}
+                initialValues={request.values}
+                onSubmit={handleFormSubmit}
+                submitLabel={saving ? "Saving..." : "Save changes"}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="surface-card overflow-hidden">
+              <div className="border-b border-gray-100 px-5 py-3.5">
+                <h2 className="text-sm font-semibold text-gray-900">Admin Controls</h2>
+              </div>
+              <div className="space-y-4 p-5">
                 <div>
                   <label htmlFor="status" className="field-label">Status</label>
                   <select
@@ -98,15 +155,20 @@ export default function AdminRequestDetailPage() {
                     onChange={(e) => setStatus(e.target.value as RequestStatus)}
                   >
                     {STATUSES.map((s) => (
-                      <option key={s} value={s}>{s.replace("_", " ")}</option>
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="notes" className="field-label">Internal notes</label>
+                  <label htmlFor="notes" className="field-label">
+                    <MessageSquare className="mr-1 inline h-3.5 w-3.5" />
+                    Internal Notes
+                  </label>
                   <textarea
                     id="notes"
-                    className="field-input min-h-[120px] resize-y"
+                    className="field-input min-h-[100px] resize-y"
                     rows={4}
                     value={adminNotes}
                     onChange={(e) => setAdminNotes(e.target.value)}
@@ -116,38 +178,45 @@ export default function AdminRequestDetailPage() {
               </div>
             </div>
 
-            <div className="surface-card p-5 text-sm text-slate-600">
-              <p className="font-semibold text-slate-900">Quick info</p>
-              <dl className="mt-3 space-y-2">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-slate-500">Last updated</dt>
-                  <dd className="text-right font-medium">{new Date(request.updated_at).toLocaleDateString()}</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-slate-500">Fields</dt>
-                  <dd className="font-medium">{request.values.length}</dd>
-                </div>
-              </dl>
-            </div>
-          </aside>
-
-          <div className="surface-card p-6 sm:p-8">
-            <h2 className="mb-6 text-lg font-bold text-slate-900">Deployment request form</h2>
-            <DynamicForm
-              fields={fields}
-              initialValues={request.values}
-              onSubmit={handleFormSubmit}
-              submitLabel={saving ? "Saving..." : "Save changes"}
-            />
-            {message && (
-              <div className={`mt-4 rounded-xl px-4 py-3 text-sm ${
-                message.includes("success")
-                  ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                  : "border border-rose-200 bg-rose-50 text-rose-700"
-              }`}>
-                {message}
+            <div className="surface-card overflow-hidden">
+              <div className="border-b border-gray-100 px-5 py-3.5">
+                <h2 className="text-sm font-semibold text-gray-900">Details</h2>
               </div>
-            )}
+              <div className="p-5">
+                <dl className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <dt className="flex items-center gap-1.5 text-gray-500">
+                      <Hash className="h-3.5 w-3.5" />
+                      Request ID
+                    </dt>
+                    <dd className="font-medium text-gray-900">#{request.id}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="flex items-center gap-1.5 text-gray-500">
+                      <User className="h-3.5 w-3.5" />
+                      Submitter
+                    </dt>
+                    <dd className="font-medium text-gray-900">{request.submitter_name}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="flex items-center gap-1.5 text-gray-500">
+                      <Clock className="h-3.5 w-3.5" />
+                      Last updated
+                    </dt>
+                    <dd className="font-medium text-gray-900">
+                      {new Date(request.updated_at).toLocaleDateString()}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="flex items-center gap-1.5 text-gray-500">
+                      <FileText className="h-3.5 w-3.5" />
+                      Fields
+                    </dt>
+                    <dd className="font-medium text-gray-900">{request.values.length}</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
           </div>
         </div>
       </div>

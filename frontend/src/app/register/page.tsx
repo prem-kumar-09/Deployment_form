@@ -5,10 +5,11 @@ import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import AuthLayout from "@/components/ui/AuthLayout";
 import type { UserRole } from "@/lib/types";
+import { AlertCircle, UserPlus, User, Shield } from "lucide-react";
 
-const ROLES: { value: UserRole; label: string; description: string }[] = [
-  { value: "user", label: "User", description: "Submit and track your deployment requests" },
-  { value: "admin", label: "Admin", description: "Review, edit, and manage all requests" },
+const ROLES: { value: UserRole; label: string; description: string; icon: typeof User }[] = [
+  { value: "user", label: "User", description: "Submit and track deployment requests", icon: User },
+  { value: "admin", label: "Admin", description: "Review, edit, and manage all requests", icon: Shield },
 ];
 
 export default function RegisterPage() {
@@ -40,20 +41,35 @@ export default function RegisterPage() {
       footer={
         <>
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-orange-600 hover:text-orange-700">
+          <Link href="/login" className="font-semibold text-brand-600 hover:text-brand-700">
             Sign in
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="name" className="field-label">Full name</label>
-          <input id="name" className="field-input" placeholder="Jane Smith" value={name} onChange={(e) => setName(e.target.value)} required />
+          <input
+            id="name"
+            className="field-input"
+            placeholder="Jane Smith"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
         </div>
         <div>
           <label htmlFor="email" className="field-label">Email address</label>
-          <input id="email" type="email" className="field-input" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input
+            id="email"
+            type="email"
+            className="field-input"
+            placeholder="you@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
         <div>
           <label htmlFor="password" className="field-label">Password</label>
@@ -70,39 +86,60 @@ export default function RegisterPage() {
         </div>
 
         <fieldset>
-          <legend className="field-label mb-3">Select your role</legend>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {ROLES.map((r) => (
-              <label
-                key={r.value}
-                className={`cursor-pointer rounded-xl border p-4 transition ${
-                  role === r.value
-                    ? "border-orange-500 bg-orange-50 ring-2 ring-orange-100"
-                    : "border-slate-200 bg-white hover:border-slate-300"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="role"
-                  value={r.value}
-                  checked={role === r.value}
-                  onChange={() => setRole(r.value)}
-                  className="sr-only"
-                />
-                <p className="font-semibold text-slate-900">{r.label}</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">{r.description}</p>
-              </label>
-            ))}
+          <legend className="field-label mb-2">Select your role</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {ROLES.map((r) => {
+              const Icon = r.icon;
+              return (
+                <label
+                  key={r.value}
+                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3.5 transition ${
+                    role === r.value
+                      ? "border-brand-500 bg-brand-50 ring-2 ring-brand-100"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    value={r.value}
+                    checked={role === r.value}
+                    onChange={() => setRole(r.value)}
+                    className="sr-only"
+                  />
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                    role === r.value ? "bg-brand-100 text-brand-600" : "bg-gray-100 text-gray-500"
+                  }`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{r.label}</p>
+                    <p className="mt-0.5 text-xs text-gray-500">{r.description}</p>
+                  </div>
+                </label>
+              );
+            })}
           </div>
         </fieldset>
 
         {error && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
         )}
         <button type="submit" className="btn-primary w-full py-3" disabled={loading}>
-          {loading ? "Creating account..." : "Create account"}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              Creating account...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              Create account
+            </span>
+          )}
         </button>
       </form>
     </AuthLayout>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormField, RequestFieldValue, RequestValueInput } from "@/lib/types";
+import { AlertCircle, Send } from "lucide-react";
 
 interface DynamicFormProps {
   fields: FormField[];
@@ -12,26 +13,34 @@ interface DynamicFormProps {
   showNumbers?: boolean;
 }
 
+const EMPTY_INITIAL: RequestFieldValue[] = [];
+
 export default function DynamicForm({
   fields,
-  initialValues = [],
+  initialValues,
   onSubmit,
   submitLabel = "Submit",
   readOnly = false,
   showNumbers = true,
 }: DynamicFormProps) {
+  const safeInitial = initialValues ?? EMPTY_INITIAL;
   const [values, setValues] = useState<Record<number, string>>({});
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const initializedRef = useRef(false);
+
+  const fieldIds = useMemo(() => fields.map((f) => f.id).join(","), [fields]);
 
   useEffect(() => {
+    if (initializedRef.current && safeInitial.length === 0) return;
     const map: Record<number, string> = {};
     for (const field of fields) {
-      const existing = initialValues.find((v) => v.field_id === field.id);
+      const existing = safeInitial.find((v) => v.field_id === field.id);
       map[field.id] = existing?.value ?? "";
     }
     setValues(map);
-  }, [fields, initialValues]);
+    initializedRef.current = true;
+  }, [fieldIds, safeInitial]);
 
   const handleChange = (fieldId: number, value: string) => {
     setValues((prev) => ({ ...prev, [fieldId]: value }));
@@ -58,38 +67,34 @@ export default function DynamicForm({
     const value = values[field.id] ?? "";
 
     const label = (
-      <label htmlFor={`field-${field.id}`} className="field-label">
+      <label htmlFor={`field-${field.id}`} className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-800">
         {showNumbers && (
-          <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-md bg-orange-100 text-xs font-bold text-orange-700">
+          <span className="flex h-5 w-5 items-center justify-center rounded bg-brand-100 text-[10px] font-bold text-brand-700">
             {index + 1}
           </span>
         )}
-        {field.label}
-        {field.is_required && <span className="ml-1 text-rose-500">*</span>}
+        <span>{field.label}</span>
+        {field.is_required && <span className="text-red-500">*</span>}
       </label>
     );
 
     if (readOnly) {
       return (
-        <div key={field.id} className="form-field-row">
+        <div key={field.id} className="rounded-lg border border-gray-100 bg-gray-50 p-4">
           {label}
-          <p className="mt-1 rounded-lg bg-white px-4 py-2.5 text-sm text-slate-800 ring-1 ring-slate-100">
-            {value || "—"}
-          </p>
+          <p className="text-sm text-gray-800">{value || <span className="text-gray-400">—</span>}</p>
         </div>
       );
     }
 
-    const inputClass = "field-input";
-
     switch (field.field_type) {
       case "textarea":
         return (
-          <div key={field.id} className="form-field-row">
+          <div key={field.id} className="space-y-0">
             {label}
             <textarea
               id={`field-${field.id}`}
-              className={`${inputClass} min-h-[120px] resize-y`}
+              className="field-input min-h-[100px] resize-y"
               rows={4}
               value={value}
               placeholder={field.placeholder ?? undefined}
@@ -101,7 +106,7 @@ export default function DynamicForm({
 
       case "radio":
         return (
-          <fieldset key={field.id} className="form-field-row">
+          <fieldset key={field.id} className="space-y-0">
             {label}
             <div className="mt-1 flex flex-wrap gap-2">
               {(field.options ?? []).map((opt) => (
@@ -127,18 +132,20 @@ export default function DynamicForm({
 
       case "select":
         return (
-          <div key={field.id} className="form-field-row">
+          <div key={field.id} className="space-y-0">
             {label}
             <select
               id={`field-${field.id}`}
-              className={inputClass}
+              className="field-input"
               value={value}
               required={field.is_required}
               onChange={(e) => handleChange(field.id, e.target.value)}
             >
               <option value="">Select an option...</option>
               {(field.options ?? []).map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </div>
@@ -146,12 +153,12 @@ export default function DynamicForm({
 
       case "date":
         return (
-          <div key={field.id} className="form-field-row">
+          <div key={field.id} className="space-y-0">
             {label}
             <input
               id={`field-${field.id}`}
               type="date"
-              className={inputClass}
+              className="field-input"
               value={value}
               required={field.is_required}
               onChange={(e) => handleChange(field.id, e.target.value)}
@@ -161,12 +168,12 @@ export default function DynamicForm({
 
       default:
         return (
-          <div key={field.id} className="form-field-row">
+          <div key={field.id} className="space-y-0">
             {label}
             <input
               id={`field-${field.id}`}
               type={field.field_type === "email" ? "email" : field.field_type === "url" ? "url" : "text"}
-              className={inputClass}
+              className="field-input"
               value={value}
               placeholder={field.placeholder ?? undefined}
               required={field.is_required}
@@ -180,25 +187,29 @@ export default function DynamicForm({
   const sortedFields = [...fields].sort((a, b) => a.sort_order - b.sort_order);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {sortedFields.map((field, i) => renderField(field, i))}
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
       {!readOnly && (
-        <div className="flex justify-end pt-4">
-          <button type="submit" className="btn-primary min-w-[140px] px-8" disabled={submitting}>
+        <div className="flex justify-end border-t border-gray-100 pt-5">
+          <button type="submit" className="btn-primary min-w-[140px]" disabled={submitting}>
             {submitting ? (
               <span className="flex items-center gap-2">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                 Saving...
               </span>
             ) : (
-              submitLabel
+              <span className="flex items-center gap-2">
+                <Send className="h-4 w-4" />
+                {submitLabel}
+              </span>
             )}
           </button>
         </div>

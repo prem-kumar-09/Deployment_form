@@ -14,6 +14,7 @@ from app.schemas import (
 from app.services import (
     create_form_field,
     create_request,
+    delete_form_field,
     get_form_schema,
     get_request,
     list_form_fields,
@@ -58,6 +59,15 @@ def patch_field(
     _: User = Depends(require_admin),
 ):
     return update_form_field(db, field_id, data)
+
+
+@router.delete("/form/fields/{field_id}", status_code=204)
+def remove_field(
+    field_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    delete_form_field(db, field_id)
 
 
 @router.post("/requests", response_model=DeploymentRequestResponse, status_code=201)
