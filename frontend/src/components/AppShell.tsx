@@ -6,6 +6,10 @@ import { useAuth } from "@/components/AuthProvider";
 
 const BARE_PATHS = ["/login", "/f/"];
 
+function isBuilderPath(pathname: string) {
+  return /\/admin\/forms\/\d+\/builder/.test(pathname);
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -19,11 +23,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   if (user && pathname.startsWith("/admin")) {
+    const isBuilder = isBuilderPath(pathname);
     return (
       <div className="flex min-h-screen">
         <AdminSidebar />
         <main className="ml-[260px] flex-1 transition-all duration-300">
-          <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">{children}</div>
+          {isBuilder ? (
+            <div className="h-screen overflow-hidden">{children}</div>
+          ) : (
+            <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">{children}</div>
+          )}
         </main>
       </div>
     );
